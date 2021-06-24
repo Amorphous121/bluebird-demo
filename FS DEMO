@@ -1,0 +1,51 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const app = express();
+const bluebird = require('bluebird');
+
+bluebird.promisifyAll(fs);
+
+app.get('/blog/:page', checkFile, (req, res, next) => {
+ 
+    let fileName = req.params.page.toString() + '.ejs';
+    let filePath = path.join(__dirname, 'views', fileName);
+    res.sendFile(filePath);
+})
+
+
+app.use((req, res, next) => {
+    let err = new Error("Page not found");
+    err.status = 404;
+    next(err);
+})
+
+
+app.use((err, req, res) => {
+
+    let message = 'Invalid Page Request';
+    let status = err.status || 500;
+    return res.status(status).json({
+        status: false,
+        message: "File not found*************"
+    });
+})
+
+
+function checkFile(req, res, next) {
+
+       fs.readdir(path.join(__dirname, 'views'), (err, data) => {
+           if (err) return next(err);
+           let fileName = req.params.page.toString() + '.ejs';
+           let filePath = path.join(__dirname, 'views', fileName);
+           console.log(filePath)
+
+           if (data.includes(fileName)) next();
+           else return next("Page not found");
+       })
+
+
+}
+
+
+app.listen(4000, () => console.log("Server is up and running at 4000"));
